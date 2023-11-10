@@ -67,6 +67,18 @@ def load_data(
         all_files = _list_image_files_recursively(os.path.join(data_dir, 'images', 'train' if is_train else 'test'))
         classes = _list_image_files_recursively(os.path.join(data_dir, 'classes', 'train' if is_train else 'test'))
         instances = _list_image_files_recursively(os.path.join(data_dir, 'instances', 'train' if is_train else 'test'))
+    elif dataset_mode == 'lizard_test2':
+        all_files = _list_image_files_recursively(os.path.join(data_dir, 'images', 'train' if is_train else 'test2'))
+        classes = _list_image_files_recursively(os.path.join(data_dir, 'classes', 'train' if is_train else 'test2'))
+        instances = _list_image_files_recursively(os.path.join(data_dir, 'instances', 'train' if is_train else 'test2'))
+    elif dataset_mode == 'lizard_test1':
+        all_files = _list_image_files_recursively(os.path.join(data_dir, 'images', 'train' if is_train else 'test1'))
+        classes = _list_image_files_recursively(os.path.join(data_dir, 'classes', 'train' if is_train else 'test1'))
+        instances = _list_image_files_recursively(os.path.join(data_dir, 'instances', 'train' if is_train else 'test1'))
+    elif dataset_mode == 'lizard_train_sub1':
+        all_files = _list_image_files_recursively(os.path.join(data_dir, 'images', 'train' if is_train else 'train_sub1'))
+        classes = _list_image_files_recursively(os.path.join(data_dir, 'classes', 'train' if is_train else 'train_sub1'))
+        instances = _list_image_files_recursively(os.path.join(data_dir, 'instances', 'train' if is_train else 'train_sub1'))
     else:
         raise NotImplementedError('{} not implemented'.format(dataset_mode))
 
@@ -164,7 +176,7 @@ class ImageDataset(Dataset):
         if self.dataset_mode == 'cityscapes':
             arr_image, arr_class, arr_instance = resize_arr([pil_image, pil_class, pil_instance], self.resolution)
         
-        if self.dataset_mode == 'lizard':
+        if 'lizard' in self.dataset_mode:
             arr_image, arr_class, arr_instance = resize_arr([pil_image, pil_class, pil_instance], self.resolution, keep_aspect=True)
         
         if self.dataset_mode == 'pannuke':

@@ -63,7 +63,7 @@ def main():
     os.makedirs(sample_path, exist_ok=True)
 
     logger.log("sampling...")
-    all_samples = []
+    # all_samples = []
     for i, (batch, cond) in enumerate(data):
         image = ((batch + 1.0) / 2.0).cuda()
         label = (cond['label_ori'].float() / 255.0).cuda()
@@ -84,19 +84,21 @@ def main():
         )
         sample = (sample + 1) / 2.0
 
-        gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
-        dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
-        all_samples.extend([sample.cpu().numpy() for sample in gathered_samples])
+        # gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
+        # dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
+        # all_samples.extend([sample.cpu().numpy() for sample in gathered_samples])
 
         for j in range(sample.shape[0]):
             tv.utils.save_image(image[j], os.path.join(image_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
             tv.utils.save_image(sample[j], os.path.join(sample_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
             tv.utils.save_image(label[j], os.path.join(label_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
 
-        logger.log(f"created {len(all_samples) * args.batch_size} samples")
+        logger.log(f"created {(i + 1) * args.batch_size * dist.get_world_size()} samples")
 
-        if len(all_samples) * args.batch_size > args.num_samples:
+        if (i + 1) * args.batch_size * dist.get_world_size() > args.num_samples:
             break
+            
+        dist.barrier()
 
     dist.barrier()
     logger.log("sampling complete")
@@ -135,7 +137,7 @@ def create_argparser():
         data_dir="",
         dataset_mode="",
         clip_denoised=True,
-        num_samples=10000,
+        num_samples=100000,
         batch_size=1,
         use_ddim=False,
         model_path="",
@@ -147,6 +149,7 @@ def create_argparser():
         world_size=4,    
         dist_url='env://',
         distributed=True,
+        timestep_respacing=250,
     )
     defaults.update(model_and_diffusion_defaults())
     parser = argparse.ArgumentParser()

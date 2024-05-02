@@ -243,7 +243,7 @@ class ImageDataset(Dataset):
         if arr_image is not None:
             return np.transpose(arr_image, [2, 0, 1]), out_dict
         else:
-            return None, out_dict
+            return torch.tensor([0]), out_dict
 
 
 def resize_arr(pil_list, image_size, keep_aspect=True):

@@ -224,7 +224,7 @@ class ImageDataset(Dataset):
         if arr_image is not None:
             arr_image = arr_image.astype(np.float32) / 127.5 - 1
 
-        out_dict['path'] = path
+        # out_dict['path'] = path
 
         if arr_class is not None:
             out_dict['label_ori'] = arr_class.copy()

@@ -79,6 +79,10 @@ def load_data(
         all_files = _list_image_files_recursively(os.path.join(data_dir, 'images', 'train' if is_train else 'train_sub1'))
         classes = _list_image_files_recursively(os.path.join(data_dir, 'classes', 'train' if is_train else 'train_sub1'))
         instances = _list_image_files_recursively(os.path.join(data_dir, 'instances', 'train' if is_train else 'train_sub1'))
+    elif dataset_mode == 'synmask':
+        all_files = None
+        classes = _list_image_files_recursively(os.path.join(data_dir, 'classes', 'synmask'))
+        instances = None
     else:
         raise NotImplementedError('{} not implemented'.format(dataset_mode))
 
@@ -87,7 +91,7 @@ def load_data(
     dataset = ImageDataset(
         dataset_mode,
         image_size,
-        all_files,
+        image_paths=all_files,
         classes=classes,
         instances=instances,
         # shard=MPI.COMM_WORLD.Get_rank(),
@@ -128,7 +132,7 @@ class ImageDataset(Dataset):
         self,
         dataset_mode,
         resolution,
-        image_paths,
+        image_paths=None,
         classes=None,
         instances=None,
         shard=0,
@@ -141,7 +145,7 @@ class ImageDataset(Dataset):
         self.is_train = is_train
         self.dataset_mode = dataset_mode
         self.resolution = resolution
-        self.local_images = image_paths[shard:][::num_shards]
+        self.local_images = None if image_paths is None else image_paths[shard:][::num_shards]
         self.local_classes = None if classes is None else classes[shard:][::num_shards]
         self.local_instances = None if instances is None else instances[shard:][::num_shards]
         self.random_crop = random_crop
@@ -151,18 +155,24 @@ class ImageDataset(Dataset):
         return len(self.local_images)
 
     def __getitem__(self, idx):
-        path = self.local_images[idx]
-        with bf.BlobFile(path, "rb") as f:
-            pil_image = Image.open(f)
-            pil_image.load()
-        pil_image = pil_image.convert("RGB")
+        if self.local_images is not None:
+            path = self.local_images[idx]
+            with bf.BlobFile(path, "rb") as f:
+                pil_image = Image.open(f)
+                pil_image.load()
+            pil_image = pil_image.convert("RGB")
+        else:
+            pil_image = None
 
         out_dict = {}
-        class_path = self.local_classes[idx]
-        with bf.BlobFile(class_path, "rb") as f:
-            pil_class = Image.open(f)
-            pil_class.load()
-        pil_class = pil_class.convert("L")
+        if self.local_classes is not None:
+            class_path = self.local_classes[idx]
+            with bf.BlobFile(class_path, "rb") as f:
+                pil_class = Image.open(f)
+                pil_class.load()
+            pil_class = pil_class.convert("L")
+        else:
+            pil_class = None
 
         if self.local_instances is not None:
             instance_path = self.local_instances[idx] # DEBUG: from classes to instances, may affect CelebA
@@ -198,27 +208,33 @@ class ImageDataset(Dataset):
                 arr_image, arr_class, arr_instance = random_crop_arr([pil_image, pil_class, pil_instance], self.resolution, min_crop_frac=0.5, max_crop_frac=0.5)
 
         if self.random_flip and random.random() < 0.5:
-            arr_image = arr_image[:, ::-1].copy()
-            arr_class = arr_class[:, ::-1].copy()
+            arr_image = arr_image[:, ::-1].copy() if arr_image is not None else None
+            arr_class = arr_class[:, ::-1].copy() if arr_class is not None else None
             arr_instance = arr_instance[:, ::-1].copy() if arr_instance is not None else None
 
-        arr_image = arr_image.astype(np.float32) / 127.5 - 1
+        if arr_image is not None:
+            arr_image = arr_image.astype(np.float32) / 127.5 - 1
 
         out_dict['path'] = path
-        out_dict['label_ori'] = arr_class.copy()
 
-        if self.dataset_mode == 'ade20k':
-            arr_class = arr_class - 1
-            arr_class[arr_class == 255] = 150
-        elif self.dataset_mode == 'coco':
-            arr_class[arr_class == 255] = 182
+        if arr_class is not None:
+            out_dict['label_ori'] = arr_class.copy()
 
-        out_dict['label'] = arr_class[None, ]
+            if self.dataset_mode == 'ade20k':
+                arr_class = arr_class - 1
+                arr_class[arr_class == 255] = 150
+            elif self.dataset_mode == 'coco':
+                arr_class[arr_class == 255] = 182
+
+            out_dict['label'] = arr_class[None, ]
 
         if arr_instance is not None:
             out_dict['instance'] = arr_instance[None, ]
 
-        return np.transpose(arr_image, [2, 0, 1]), out_dict
+        if arr_image is not None:
+            return np.transpose(arr_image, [2, 0, 1]), out_dict
+        else:
+            return None, out_dict
 
 
 def resize_arr(pil_list, image_size, keep_aspect=True):

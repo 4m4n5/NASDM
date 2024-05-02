@@ -65,7 +65,10 @@ def main():
     logger.log("sampling...")
     # all_samples = []
     for i, (batch, cond) in enumerate(data):
-        image = ((batch + 1.0) / 2.0).cuda()
+        image = None
+        if batch is not None:
+            image = ((batch + 1.0) / 2.0).cuda()
+        
         label = (cond['label_ori'].float() / 255.0).cuda()
         model_kwargs = preprocess_input(cond, num_classes=args.num_classes)
 
@@ -77,7 +80,7 @@ def main():
         )
         sample = sample_fn(
             model,
-            (args.batch_size, 3, image.shape[2], image.shape[3]),
+            (args.batch_size, 3, label.shape[2], label.shape[3]),
             clip_denoised=args.clip_denoised,
             model_kwargs=model_kwargs,
             progress=True
@@ -89,7 +92,7 @@ def main():
         # all_samples.extend([sample.cpu().numpy() for sample in gathered_samples])
 
         for j in range(sample.shape[0]):
-            tv.utils.save_image(image[j], os.path.join(image_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
+            # tv.utils.save_image(image[j], os.path.join(image_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
             tv.utils.save_image(sample[j], os.path.join(sample_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
             tv.utils.save_image(label[j], os.path.join(label_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
 

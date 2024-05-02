@@ -192,6 +192,9 @@ class ImageDataset(Dataset):
         if self.dataset_mode == 'cityscapes':
             arr_image, arr_class, arr_instance = resize_arr([pil_image, pil_class, pil_instance], self.resolution)
         
+        if self.dataset_mode == 'synmask':
+            arr_image, arr_class, arr_instance = resize_arr([pil_image, pil_class, pil_instance], self.resolution)
+        
         if 'lizard' in self.dataset_mode:
             arr_image, arr_class, arr_instance = resize_arr([pil_image, pil_class, pil_instance], self.resolution, keep_aspect=True)
         

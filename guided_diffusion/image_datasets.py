@@ -81,7 +81,7 @@ def load_data(
         instances = _list_image_files_recursively(os.path.join(data_dir, 'instances', 'train' if is_train else 'train_sub1'))
     elif dataset_mode == 'synmask':
         all_files = None
-        classes = _list_image_files_recursively(os.path.join(data_dir, 'classes', 'synmask'))
+        classes = _list_image_files_recursively(os.path.join(data_dir, 'classes'))
         instances = None
     else:
         raise NotImplementedError('{} not implemented'.format(dataset_mode))

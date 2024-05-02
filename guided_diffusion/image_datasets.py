@@ -1,6 +1,7 @@
 import os
 import math
 import random
+import torch
 
 from PIL import Image
 import blobfile as bf

@@ -155,7 +155,10 @@ class ImageDataset(Dataset):
         self.random_flip = random_flip
 
     def __len__(self):
-        return len(self.local_images)
+        if self.local_images is not None:
+            return len(self.local_images)
+        elif self.local_classes is not None:
+            return len(self.local_classes)
 
     def __getitem__(self, idx):
         if self.local_images is not None:

@@ -193,7 +193,7 @@ class ImageDataset(Dataset):
             arr_image, arr_class, arr_instance = resize_arr([pil_image, pil_class, pil_instance], self.resolution)
         
         if self.dataset_mode == 'synmask':
-            arr_image, arr_class, arr_instance = resize_arr([pil_image, pil_class, pil_instance], self.resolution)
+            arr_image, arr_class, arr_instance = None, np.array(pil_class), None
         
         if 'lizard' in self.dataset_mode:
             arr_image, arr_class, arr_instance = resize_arr([pil_image, pil_class, pil_instance], self.resolution, keep_aspect=True)

@@ -109,7 +109,7 @@ def main():
 
 
 def preprocess_input(data, num_classes):
-    inst_map = data['label'].copy()
+    inst_map = data['label'].clone()
     # move to GPU and change data types
     data['label'] = data['label'].long()
 

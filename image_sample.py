@@ -63,7 +63,7 @@ def main():
     os.makedirs(sample_path, exist_ok=True)
 
     logger.log("sampling...")
-    # all_samples = []
+    all_samples = []
     for i, (batch, cond) in enumerate(data):
         # import pdb; pdb.set_trace()
         image = None
@@ -88,21 +88,16 @@ def main():
         )
         sample = (sample + 1) / 2.0
 
-        # gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
-        # dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
-        # all_samples.extend([sample.cpu().numpy() for sample in gathered_samples])
+        gathered_samples = [th.zeros_like(sample) for _ in range(dist.get_world_size())]
+        dist.all_gather(gathered_samples, sample)  # gather not supported with NCCL
+        all_samples.extend([sample.cpu().numpy() for sample in gathered_samples])
 
         for j in range(sample.shape[0]):
             # tv.utils.save_image(image[j], os.path.join(image_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
             tv.utils.save_image(sample[j], os.path.join(sample_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
             tv.utils.save_image(label[j], os.path.join(label_path, cond['path'][j].split('/')[-1].split('.')[0] + '.png'))
 
-        logger.log(f"created {(i + 1) * args.batch_size * dist.get_world_size()} samples")
-
-        if (i + 1) * args.batch_size * dist.get_world_size() > args.num_samples:
-            break
-            
-        dist.barrier()
+        logger.log(f"created {len(all_samples) * args.batch_size} samples")
 
     dist.barrier()
     logger.log("sampling complete")

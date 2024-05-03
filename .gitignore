@@ -1,6 +1,8 @@
 outputs/
 wandb/
 samples/
+*/__pycache__/
+guided_diffusion/__pycache__
 
 led / optimized / DLL files
 __pycache__/

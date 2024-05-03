@@ -65,7 +65,6 @@ def main():
     logger.log("sampling...")
     # all_samples = []
     for i, (batch, cond) in enumerate(data):
-        import pdb; pdb.set_trace()
         image = None
         if batch is not None:
             image = ((batch + 1.0) / 2.0).cuda()

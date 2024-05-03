@@ -809,7 +809,7 @@ class UNetModel(nn.Module):
         hs = []
         emb = self.time_embed(timestep_embedding(timesteps, self.model_channels))
 
-        import pdb; pdb.set_trace()
+
         if self.num_classes is not None:
             assert y.shape == (x.shape[0], self.num_classes, x.shape[2], x.shape[3])
 

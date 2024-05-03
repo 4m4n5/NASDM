@@ -109,6 +109,7 @@ def main():
 
 
 def preprocess_input(data, num_classes):
+    inst_map = data['label'].copy()
     # move to GPU and change data types
     data['label'] = data['label'].long()
 
@@ -121,6 +122,9 @@ def preprocess_input(data, num_classes):
     # concatenate instance map if it exists
     if 'instance' in data:
         inst_map = data['instance']
+        instance_edge_map = get_edges(inst_map)
+        input_semantics = th.cat((input_semantics, instance_edge_map), dim=1)
+    else:
         instance_edge_map = get_edges(inst_map)
         input_semantics = th.cat((input_semantics, instance_edge_map), dim=1)
 

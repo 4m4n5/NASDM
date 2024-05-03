@@ -81,7 +81,7 @@ def main():
         )
         sample = sample_fn(
             model,
-            (args.batch_size, 3, label.shape[2], label.shape[3]),
+            (args.batch_size, 3, label.shape[1], label.shape[2]),
             clip_denoised=args.clip_denoised,
             model_kwargs=model_kwargs,
             progress=True
